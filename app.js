@@ -1,9 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 
-const app = express();
-
 const contactsRouter = require("./app/routes/contact.route");
+const ApiError = require("./app/api-error");
+
+const app = express();
 
 app.use(cors());
 
@@ -14,5 +15,20 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/contacts", contactsRouter);
+
+// handle 404 response
+app.use((req, res, next) => {
+  return next(new ApiError(404, "Resource not found"));
+});
+
+// define error-handling middleware last, after other app.use() and routes calls
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  res.status(statusCode).json({
+    message: message,
+  });
+});
 
 module.exports = app;
